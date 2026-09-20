@@ -1,0 +1,174 @@
+1. First: What problem are threads solving?
+	Imagine your Java application has to do three things:
+		Task A → Download a file
+		Task B → Process a large amount of data
+		Task C → Send an API request
+	With a single execution path, these happen one after another:
+	If A takes 10 seconds, B cannot start until A finishes.
+	Threads allow different tasks to make progress independently:
+		Thread 1 → A ────────────────
+		Thread 2 → B ──────────
+		Thread 3 → C ───────
+	This is the fundamental reason we use threads.
+	
+	
+2. What is a process?
+	When you start a Java application: the operating system creates a process.
+	A process has things such as:
+		memory
+		resources
+		one or more threads
+		program state
+	Inside that process, Java can have multiple threads.
+	Java Process
+		│
+		├── Thread 1
+		├── Thread 2
+		├── Thread 3
+		└── Thread 4
+	A thread is a path of execution inside a process.
+	
+
+3. The main thread
+	When you write:
+		public static void main(String[] args) {
+			System.out.println("Hello");
+		}
+	Java doesn't execute this magically without a thread. The JVM starts a thread called the main thread, and your main() method runs on it.
+	Conceptually:
+		JVM starts
+			│
+			▼
+		Main Thread
+			│
+			▼
+		main()
+			│
+			├── statement 1
+			├── statement 2
+			└── statement 3
+	So even the simplest Java application already uses a thread.
+	
+
+4. How do we create another thread?
+	There are several ways in Java.
+	The first one is by extending Thread.
+	
+	class MyThread extends Thread {
+		@Override
+		public void run() {
+			System.out.println("My thread is running");
+		}
+	}
+	
+	Then:
+	public class Main {
+		public static void main(String[] args) {
+			MyThread thread = new MyThread();
+			thread.start();
+		}
+	}
+	Here:
+		MyThread thread = new MyThread(); --> creates an object.
+	But this:
+		thread.start(); --> is what actually asks Java to start a new thread of execution.
+		
+
+5. start() vs run()
+	If we do:
+		MyThread thread = new MyThread();
+		thread.run();
+	we are not starting a new thread. We're simply calling a normal method.
+	Conceptually:
+		Main Thread
+			│
+			▼
+			thread.run()
+			│
+			▼
+		run() executes
+	But:
+		thread.start(); --> asks the JVM to create/schedule a new thread, which then executes run().		
+		Main Thread
+			│
+			└──────────────► start()
+							│
+							▼
+						New Thread
+							│
+							▼
+							run()
+	start() creates/starts the new execution path; run() contains the work that thread performs.
+	
+	
+6. But why do we have Runnable?
+	A class can extend only one class. Suppose our class already extends some other class and we need to extend thread class as well to run it on a separate thread this wont be allowed as Java doesn't support multiple class inheritance. This is where Runnable interface helps to create new thread.
+	
+
+7. Runnable
+	Runnable is an interface representing a piece of work that can be run.
+	Its essential definition is:
+		@FunctionalInterface
+		public interface Runnable {
+			void run();
+		}
+	So we can write:
+		class DownloadTask implements Runnable {
+			@Override
+			public void run() {
+				System.out.println("Downloading...");
+			}
+		}
+	
+	Thread
+		↓
+	is responsible for executing
+
+	Runnable
+		↓
+	describes the work to execute
+	
+
+8. How do we execute a Runnable?
+	We create the task:			 	Runnable task = new DownloadTask();
+	Then give it to a Thread: 		Thread thread = new Thread(task);
+	And start the thread: 			thread.start();
+	
+	
+9. Why is Runnable generally a better abstraction?
+	Runnable is preferable to extending Thread when you're simply defining work as it will allow to extend other class as well.
+	
+
+10. Now how we can use lambda here?
+	new Thread(() -> {
+		System.out.println("Task running");
+	});
+	This is where we provide the implementation to the Thread class and start it in new thread.
+	Runnable has only one abstract method: Therefore it is a functional interface. so it can be directly used as lambda expression. Java allows us to replace the anonymous implementation with a lambda
+	
+
+11. Our hierarchy so far
+	                    Java Process
+                         │
+                 ┌───────┴───────┐
+                 │               │
+            Main Thread      Other Threads
+                                 │
+                         ┌───────┴───────┐
+                         │               │
+                    Thread object    Thread object
+                         │
+                         ▼
+                     executes
+                         │
+                         ▼
+                   Runnable.run()
+                         │
+                         ▼
+                       Work
+					   
+
+	And there are two concepts we must keep separate:
+		Runnable --> "What work should be done?"
+		Thread   --> "Which execution path executes that work?"
+		

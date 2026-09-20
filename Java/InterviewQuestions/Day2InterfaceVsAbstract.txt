@@ -1,0 +1,22 @@
+1. ReferenceType and ObjectType?
+The reference type determines what methods are accessible at compile time, while the actual object type determines which overridden implementation executes at runtime.
+
+2. Explain when and why you would choose an interface versus an abstract class?
+
+I would choose interface only when contracts needs to be defined and also when class needs multiple inheritance for different contracts, while I would use an abstract class when the subclasses have a strong common relationship and I want to share common state, behavior, or partially implemented functionality between them.
+
+
+3. Why do you think Java allows multiple interfaces but doesn't allow multiple class inheritance?
+Java allows a class to implement multiple interfaces because interfaces primarily define contracts or capabilities, allowing a class to combine different behaviors. Java doesn't allow multiple class inheritance because inheriting concrete implementations from multiple parents can create ambiguity about which implementation should be used. This avoids problems such as the diamond inheritance problem.
+
+With interfaces traditionally defining abstract contracts, there is no competing implementation to choose from. Java 8 does complicate this slightly because interfaces can have default implementations, but Java has explicit rules for resolving those conflicts. The subclass must explicitly override the default method and say which implemtation must be choosed
+
+The purpose of default methods in interface was to support backward compaability
+Suppose already some classes have implemeted an interface and provided implementation to that and in future if requirement comes to add a new contract in the interface it would break the application as the classes would fail to compile without providing the implementation
+
+
+4. Why do you think a static interface method belongs to the interface itself rather than being inherited by implementing classes?
+instance method  --> belongs to object --> runtime polymorphism applies
+static method --> belongs to type --> no runtime polymorphic dispatch
+That's why Java doesn't make interface static methods available through implementing classes.
+
