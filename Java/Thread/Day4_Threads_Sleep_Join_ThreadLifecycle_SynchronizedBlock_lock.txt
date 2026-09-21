@@ -1,0 +1,170 @@
+1. Thread.sleep(500);
+	it doesn't mean: "Exactly 500 ms later, this thread will execute again."
+	It means roughly: "This thread should not execute for at least that sleep duration."
+	After the sleep period, the thread becomes eligible to run again, but the operating system/JVM scheduler decides when it actually gets CPU time. That's one reason concurrent output can look different between runs.
+
+2. sleep() vs join()
+
+	|             | `sleep()`            | `join()`                 |
+	| ----------- | -------------------- | ------------------------ |
+	| Purpose     | Pause current thread | Wait for another thread  |
+	| Who waits?  | Current thread       | Current thread           |
+	| Waiting for | Time duration        | Another thread to finish |
+	| Example     | `Thread.sleep(1000)` | `threadObj.join()`       |
+
+	sleep is member of reference type i.e called upon threadclass, while join is member of the objecttype. Sleep puts the current thread to wait where its called while join makes the current thread to wait to execute its next set of instructions untill the execution of the thread object finishes
+	
+3. Thread lifecycle
+	A Java thread doesn't just go from "not running" to "finished." During its lifetime, it moves through different states.
+	The official Java Thread.State values are:
+		NEW
+		RUNNABLE
+		BLOCKED
+		WAITING
+		TIMED_WAITING
+		TERMINATED
+
+4. Deep understanding on states of Thread
+	a. NEW
+		When you create a Thread object: Thread thread = new Thread(new NumberTask1()); 
+		the thread is in: NEW state. It has been created, but it hasn't started executing yet. 
+		At this point: threadObj.isAlive() returns: false. because the thread hasn't started.
+		
+	b. RUNNABLE
+		When you call: thread.start(); the thread becomes eligible to execute.
+		Java calls the state RUNNABLE, not RUNNING. Why?
+		Because RUNNABLE means the thread is ready to run or currently running, depending on how the JVM/OS scheduler handles it. RUNNABLE = eligible to execute.
+		
+	c. TIMED_WAITING
+		When you call: Thread.sleep(500); is executing, the thread enters: TIMED_WAITING state
+		The sleeping thread isn't executing during that sleep period. But other threads can continue.
+		
+	d. WAITING
+		A thread can enter WAITING when it waits indefinitely for another thread/event. thread.join();
+			sleep()
+				→ TIMED_WAITING
+				→ waiting for a specific amount of time
+			join()
+				→ WAITING
+				→ waiting for another thread to finish
+		There are also timed versions such as: thread.join(1000);
+		
+	e. BLOCKED
+		Suppose two threads try to enter the same synchronized section:
+			Thread A ─-> gets lock ─-> executing
+			Thread B --> wants lock ─-> BLOCKED
+		Thread B has to wait until Thread A releases the lock.	
+	
+	f. TERMINATED
+		When run() finishes: the thread reaches: TERMINATED state . It cannot be started again.
+		threadObj.start();
+		threadObj.start();
+		will cause: IllegalThreadStateException.
+		A Thread instance represents one execution.
+		
+	Putting everything together
+	Here's the simplified lifecycle:
+		       creation of Thread Object
+                      ↓
+                 ┌─────────┐
+                 │   NEW   │
+                 └────┬────┘
+                      ↓
+					start()
+					  ↓
+                 ┌───────────┐
+                 │ RUNNABLE  │
+                 └─────┬─────┘
+                       │
+          ┌────────────┼─────────────┐
+          ↓            ↓             ↓
+       sleep()      join()       synchronized
+          ↓            ↓             ↓
+   TIMED_WAITING    WAITING       BLOCKED
+          │            │             │
+          └────────────┴─────────────┘
+                       ↓
+                  RUNNABLE
+                       ↓
+                run() finishes
+                       ↓
+                ┌────────────┐
+                │ TERMINATED │
+                └────────────┘
+	Note: also when sleep() finishes the current thread attains RUNNABLE state.
+
+
+5. 	What does synchronized do?
+	Only one thread at a time can execute this protected section for this lock. For example:
+		synchronized (lock) {
+			count++;
+		}
+	          LOCK
+              🔑
+               │
+       ┌───────┴───────┐
+       │               │
+   Thread A         Thread B
+       │               │
+       ▼               │
+   gets lock           │
+       │            waits
+       ▼               │
+   count++             │
+       │               │
+       ▼               │
+ releases lock         │
+                       ▼
+                    gets lock
+                       │
+                       ▼
+                    count++
+	Thread B cannot enter the synchronized block while Thread A owns that lock.				
+
+
+6. What is lock?
+	Every Java object can act as a monitor/lock. if there is no object to be passed we can just pass: Object lock = new Object();
+	If Thread A owns the lock and Thread B tries to enter the same synchronized block: 
+		Thread B
+			│
+			▼
+	tries to acquire lock
+			│
+			▼
+		BLOCKED
+		
+	Suppose: Thread A gets the lock and then sleeps.
+		synchronized (lock) {
+			Thread.sleep(5000);
+		}
+	Does sleeping release the lock? No
+		Thread A
+			│
+			▼
+		gets lock 🔒
+			│
+			▼
+		sleep(5 sec)
+			│
+			│ still owns 🔒
+			│
+			▼
+		wakes up
+			│
+			▼
+	leaves synchronized block
+			│
+			▼
+		releases 🔒
+	This is one reason sleep() and wait() are very different. With wait():
+		synchronized (lock) {
+			lock.wait();
+		}
+	the thread releases that object's monitor while waiting.
+	
+	synchronized provides mutual exclusion for a particular monitor. If one thread owns the lock, another thread trying to acquire the same lock is blocked, but it can continue executing code that doesn't require that lock.
+	
+7. Why is count++ not thread-safe? refer to SynchronizedCounterExample
+	count++ is a read-modify-write operation rather than a single atomic operation. Multiple threads can read the same value and overwrite each other's updates, causing a race condition. Synchronization provides mutual exclusion so only one thread at a time can perform the operation
+	
+	
