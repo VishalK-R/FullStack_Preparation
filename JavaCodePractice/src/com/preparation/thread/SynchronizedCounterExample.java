@@ -4,6 +4,8 @@ public class SynchronizedCounterExample {
 	static int count = 0;
 	/**
 	 * Without synchronized the count will vary as both thread would have accessed same value of count
+	 * 
+	 * 
 	 * @param args
 	 * @throws InterruptedException
 	 */
