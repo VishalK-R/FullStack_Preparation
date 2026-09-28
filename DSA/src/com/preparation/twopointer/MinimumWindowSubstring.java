@@ -12,13 +12,10 @@ public class MinimumWindowSubstring {
 	    HashMap<Character, Integer> curFreqMap = new HashMap<>();
 	    int requiredDistinctChar = reqFreqMap.size();
 	    int distinctCharFound = 0;
-
 	    int left = 0;
 	    int right = 0;
-
 	    int minStart = 0;
 	    int minLength = Integer.MAX_VALUE;
-
 	    while (right < s.length()) {
 	        distinctCharFound = addCharacter(s.charAt(right),reqFreqMap,curFreqMap,
 	        		distinctCharFound);
@@ -34,11 +31,9 @@ public class MinimumWindowSubstring {
 	        }
 	        right++;
 	    }
-
 	    if (minLength == Integer.MAX_VALUE) {
 	        return "";
 	    }
-
 	    return s.substring(minStart, minStart + minLength);
 	}
 
